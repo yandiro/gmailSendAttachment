@@ -12,7 +12,8 @@ const authUrlObj = {
   redirect_uri: 'http://localhost:3000/create/',
   response_type: 'code',
   scope: SCOPE,
-  access_type: 'offline'
+  access_type: 'offline',
+  prompt: 'consent',
 }
 
 const authUrl = `${authUrlObj.base}?client_id=${authUrlObj.client_id}&redirect_uri=${authUrlObj.redirect_uri}&response_type=${authUrlObj.response_type}&scope=${authUrlObj.scope}&access_type=${authUrlObj.access_type}`;
