@@ -10,14 +10,19 @@ function useQuery() {
     const query = queryString.parse(useLocation().search)
     const code = query.code;
 
-    // Simple POST request with a JSON body using fetch
     const requestOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code })
     };
     fetch(`http://localhost:3333/code/`, requestOptions)
-        .then(response => response.json())
+        .then(response => {
+            response.json();
+            console.log(response)
+        })
+        .catch(err => {
+            console.log(err);
+        })
 }
 
 function LinearProgressWithLabel(props) {
