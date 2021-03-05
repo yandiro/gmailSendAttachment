@@ -4,11 +4,15 @@ const SentMail = require('../models/sentEmail');
 const mimemessage = require('mimemessage');
 const fs = require('fs');
 
-
 async function makeBody(to, file) {
-    const fileBase64 = fs.readFileSync(file.path).toString('base64');
+    let fileBase64;
 
-    let msg, alternateEntity, htmlEntity, plainEntity, pngEntity;
+    if (file.path)
+        fileBase64 = fs.readFileSync(file.path).toString('base64');
+    else
+        fileBase64 = '';
+
+    let msg, alternateEntity, htmlEntity, plainEntity, attachment;
 
     // Build the top-level multipart MIME message.
     msg = mimemessage.factory({
@@ -37,12 +41,12 @@ async function makeBody(to, file) {
     });
 
     // Build the PNG MIME entity.
-    pngEntity = mimemessage.factory({
+    attachment = mimemessage.factory({
         contentType: file.mimetype,
         contentTransferEncoding: 'base64',
         body: fileBase64
     });
-    pngEntity.header('Content-Disposition', `attachment; filename="${file.filename}"`);
+    attachment.header('Content-Disposition', `attachment; filename="${file.filename}"`);
 
     // Add both the HTML and plain text entities to the multipart/alternate entity.
     // alternateEntity.body.push(htmlEntity);
@@ -52,9 +56,10 @@ async function makeBody(to, file) {
     msg.body.push(alternateEntity);
 
     // Add the PNG entity to the top-level MIME message.
-    msg.body.push(pngEntity);
+    if (fileBase64)
+    msg.body.push(attachment);
 
-    var encodedMail = new Buffer.from(msg.toString()).toString("base64").replace(/\+/g, '-').replace(/\//g, '_');
+    const encodedMail = new Buffer.from(msg.toString()).toString("base64").replace(/\+/g, '-').replace(/\//g, '_');
     return encodedMail;
 }
 
@@ -82,7 +87,7 @@ async function sendMessage(to, file, auth) {
         }
     } catch (e) {
         console.error('Error sending email in Try/Catch ("let sending"): ', e);
-        sending = { ok: false, message: e.message, status: e.response.status }
+        sending = { ok: false, message: e.message || 'Internal server error', status: e.response ? e.response.status : 500 }
         return sending;
     }
 
@@ -92,11 +97,10 @@ async function sendMessage(to, file, auth) {
         if (registering.ok) {
             return sending;
         } else {
-            console.error('Eror registering email ("let registering"): ',registering);
+            console.error('Error registering email ("let registering"): ', registering);
             return registering
         }
     }
-
 }
 
 async function registerSentEmail(mailInfo, auth) {
@@ -137,7 +141,7 @@ async function registerSentEmail(mailInfo, auth) {
 }
 
 function delUploadedFile(file) {
-    fs.unlinkSync(file.path);
+    if (file.path) fs.unlinkSync(file.path);
 }
 
 async function handleSendEmail(req, res) {

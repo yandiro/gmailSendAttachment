@@ -15,7 +15,7 @@ const SentEmailSchema = new Schema({
     },
     file_name: {
         type: String,
-        required: true
+        // required: true
     }
 },
     {
