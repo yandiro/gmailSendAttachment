@@ -16,7 +16,7 @@ const authUrlObj = {
   prompt: 'consent',
 }
 
-const authUrl = `${authUrlObj.base}?client_id=${authUrlObj.client_id}&redirect_uri=${authUrlObj.redirect_uri}&response_type=${authUrlObj.response_type}&scope=${authUrlObj.scope}&access_type=${authUrlObj.access_type}`;
+const authUrl = `${authUrlObj.base}?client_id=${authUrlObj.client_id}&redirect_uri=${authUrlObj.redirect_uri}&response_type=${authUrlObj.response_type}&scope=${authUrlObj.scope}&access_type=${authUrlObj.access_type}&prompt=${authUrlObj.prompt}`;
 
 function App() {
 

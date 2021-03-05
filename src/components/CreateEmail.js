@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { useLocation } from "react-router-dom";
 import queryString from 'query-string'
 
-import { TextField, Button, IconButton, LinearProgress, Box, Typography } from '@material-ui/core';
+import { Button, IconButton, Typography, TextField } from '@material-ui/core';
 import { AddCircle } from '@material-ui/icons';
+
+import LinearProgressWithLabel from './LinearProgressWithLabel';
 
 function useQuery() {
     const query = queryString.parse(useLocation().search)
@@ -25,39 +27,30 @@ function useQuery() {
         })
 }
 
-
-
-function LinearProgressWithLabel(props) {
-    if (!props.isVisible) return null
-    else if (props.isLoading) {
-        return (<>
-            <div>{props.isLoading}</div>
-            <LinearProgress />
-        </>)
-    }
-    return (
-        <Box display="flex" alignItems="center">
-            <Box width="100%" mr={1}>
-                <LinearProgress variant="determinate" value={100} />
-            </Box>
-            <Box minWidth={35}>
-                <Typography variant="body2" color="textSecondary">100%</Typography>
-            </Box>
-        </Box>
-    );
-}
-
-
 function CreateEmail() {
+    useQuery();
+
     const [isLinearProgressVisible, setIsLinearProgressVisible] = useState(false);
     const [isLoadingAttachment, setIsLoadingAttachment] = useState(false);
     const [file, setFile] = useState({});
     const [returnedFile, setReturnedFile] = useState({});
+    const [sendingResponse, setSendingResponse] = useState();
+    const [formValidity, setFormValidity] = useState({ isDirty: false });
 
-    useQuery();
+    useEffect(() => {
+        if (sendingResponse === 'OK') setSendingResponse('Email sent!');
+    }, [sendingResponse]);
 
     function handleSendEmail() {
-        const toInputValue = document.querySelector('#email_address').value
+        setSendingResponse(null)
+        if (!formValidity?.isValid && formValidity?.isDirty) {
+            setSendingResponse('Form is invalid')
+            return
+        }
+        setIsLinearProgressVisible(true);
+        setIsLoadingAttachment(true);
+
+        const toInputValue = document.querySelector('input[id="email"]').value
 
         const body = {
             to: toInputValue,
@@ -74,18 +67,34 @@ function CreateEmail() {
             .then(response => response.json())
             .then(res => {
                 console.log('/send: ', res);
+                setSendingResponse(res.message);
+                if (res.ok)
+                    timerToClearForm(3000);
             })
-            .catch(err => { console.log('/send: ', err) })
+            .catch(err => {
+                console.log('/send: ', err)
+            }).finally(() => {
+                setIsLinearProgressVisible(false);
+                setIsLoadingAttachment(false);
+            })
+    }
 
+    function timerToClearForm(milliseconds = 0) {
+        setTimeout(() => {
+            document.getElementById("form").reset();
 
-        console.log('clearForm()');
+            setIsLinearProgressVisible(false);
+            setFormValidity({ isDirty: false });
+            setSendingResponse(null);
+            setIsLinearProgressVisible(false);
+            setIsLoadingAttachment(false);
+        }, milliseconds);
     }
 
     function handleFileInput(files) {
         if (!files.length) return
 
         setFile(files.item(0));
-        
         uploadFile(files.item(0));
     }
 
@@ -94,7 +103,6 @@ function CreateEmail() {
         setIsLinearProgressVisible(true);
 
         const formData = new FormData();
-
         formData.append('file', fileToUpload, fileToUpload.name);
 
         const requestOptions = {
@@ -105,21 +113,42 @@ function CreateEmail() {
         fetch('http://localhost:3333/uploadfile', requestOptions)
             .then(response => response.json())
             .then(res => {
-                console.log('uploadfile response: ', res);
+                console.log('/uploadfile response: ', res);
                 setReturnedFile(res.file);
             })
-            .catch(err => console.log(err))
+            .catch(err => {
+                console.log('/uploadfile error: ', err);
+                console.log(err)
+            })
             .finally(() => {
                 setIsLoadingAttachment(false);
             })
     }
 
+    function validateEmailInput(element) {
+        const isValid = element.validity.valid;
+        const isDirty = true;
+
+        setFormValidity(
+            {
+                isValid,
+                helperText: element.validationMessage,
+                isDirty
+            }
+        )
+    }
+
     return (
-        <div style={styles.wrapper}>
+        <div style={styles.wrapper} >
+
             <form style={styles.form} id="form">
                 <div style={styles.upper}> {/* // superior part */}
                     <div> {/* left Part */}
-                        <TextField type="email" id="email_address" label="Send email to:" fullWidth required />
+                        <TextField type="email" id="email" label="Send email to:" fullWidth required
+                            helperText={formValidity.helperText} error={!formValidity.isValid && formValidity.isDirty}
+                            onChange={(event) => {
+                                validateEmailInput(event.target);
+                            }} />
                     </div>
                     <div> {/* right Part */}
                         <input style={{ display: 'none' }} id="upload" type="file" onChange={(e) => handleFileInput(e.target.files)} />
@@ -129,25 +158,27 @@ function CreateEmail() {
                             </IconButton>
                         </label>
                     </div>
-
                 </div>
 
                 <div> {/* // middle part */}
-                    <Typography variant="body2" color="textSecondary" align="right">{file.name || " "}</Typography>
-                    <LinearProgressWithLabel isLoading={isLoadingAttachment} isVisible={isLinearProgressVisible} />
+                    {sendingResponse ? <Typography variant="body2" color="textSecondary" align="center">{sendingResponse}</Typography> :
+                        <div>
+                            <Typography variant="body2" color="textSecondary" align="right">{isLinearProgressVisible && file.name ? file.name : null}</Typography>
+                            <LinearProgressWithLabel isLoading={isLoadingAttachment} isVisible={isLinearProgressVisible} />
+                        </div>
+                    }
                 </div>
 
                 <div style={styles.bottom}> {/* // bottom part */}
-                    <Button variant="contained">Reset</Button>
+                    <Button variant="contained" onClick={e => timerToClearForm()}>Reset</Button>
                     <Button variant="contained" color="primary" onClick={(e) => handleSendEmail()}>
                         Send
                     </Button>
                 </div>
             </form>
-        </div>
+        </div >
     );
 }
-
 
 const styles = {
     bottom: {
@@ -168,14 +199,12 @@ const styles = {
         display: 'flex',
         flexFlow: 'column nowrap',
         justifyContent: 'space-between'
-
     },
     wrapper: {
         width: '100vw',
         height: '100vh',
         display: 'grid',
         placeContent: 'center'
-
     }
 };
 
