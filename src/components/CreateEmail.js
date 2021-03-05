@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import { useLocation } from "react-router-dom";
 import queryString from 'query-string'
@@ -18,23 +18,30 @@ function useQuery() {
     fetch(`http://localhost:3333/code/`, requestOptions)
         .then(response => {
             response.json();
-            console.log(response)
+            console.log(response);
         })
         .catch(err => {
             console.log(err);
         })
 }
 
+
+
 function LinearProgressWithLabel(props) {
+    if (!props.isVisible) return null
+    else if (props.isLoading) {
+        return (<>
+            <div>{props.isLoading}</div>
+            <LinearProgress />
+        </>)
+    }
     return (
         <Box display="flex" alignItems="center">
             <Box width="100%" mr={1}>
-                <LinearProgress variant="determinate" {...props} />
+                <LinearProgress variant="determinate" value={100} />
             </Box>
             <Box minWidth={35}>
-                <Typography variant="body2" color="textSecondary">{`${Math.round(
-                    props.value,
-                )}%`}</Typography>
+                <Typography variant="body2" color="textSecondary">100%</Typography>
             </Box>
         </Box>
     );
@@ -42,39 +49,70 @@ function LinearProgressWithLabel(props) {
 
 
 function CreateEmail() {
+    const [isLinearProgressVisible, setIsLinearProgressVisible] = useState(false);
+    const [isLoadingAttachment, setIsLoadingAttachment] = useState(false);
+    const [file, setFile] = useState({});
+    const [returnedFile, setReturnedFile] = useState({});
+
     useQuery();
 
-    let fileToUpload;
-
-    function handleFileInput(files) {
-        fileToUpload = files.item(0);
-        handleSendEmail();
-    }
-
     function handleSendEmail() {
-        let formData = new FormData();
         const toInputValue = document.querySelector('#email_address').value
 
-        formData.append('to', toInputValue || 'yandiro99@hotmail.com')
-        formData.append('file', fileToUpload, fileToUpload.name);
+        const body = {
+            to: toInputValue,
+            file: returnedFile
+        };
 
-        uploadFile(formData);
+        const requestOptions = {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        };
+
+        fetch('http://localhost:3333/send', requestOptions)
+            .then(response => response.json())
+            .then(res => {
+                console.log('/send: ', res);
+            })
+            .catch(err => { console.log('/send: ', err) })
+
+
         console.log('clearForm()');
     }
 
-    function uploadFile(formData) {
+    function handleFileInput(files) {
+        if (!files.length) return
+
+        setFile(files.item(0));
+        
+        uploadFile(files.item(0));
+    }
+
+    function uploadFile(fileToUpload) {
+        setIsLoadingAttachment(true);
+        setIsLinearProgressVisible(true);
+
+        const formData = new FormData();
+
+        formData.append('file', fileToUpload, fileToUpload.name);
+
         const requestOptions = {
             method: 'POST',
             body: formData
         };
 
-        fetch('http://localhost:3333/send', requestOptions)
+        fetch('http://localhost:3333/uploadfile', requestOptions)
             .then(response => response.json())
-            .then((res) => console.log(res))
+            .then(res => {
+                console.log('uploadfile response: ', res);
+                setReturnedFile(res.file);
+            })
             .catch(err => console.log(err))
+            .finally(() => {
+                setIsLoadingAttachment(false);
+            })
     }
-
-
 
     return (
         <div style={styles.wrapper}>
@@ -95,11 +133,12 @@ function CreateEmail() {
                 </div>
 
                 <div> {/* // middle part */}
-                    <LinearProgressWithLabel value={50} />
+                    <Typography variant="body2" color="textSecondary" align="right">{file.name || " "}</Typography>
+                    <LinearProgressWithLabel isLoading={isLoadingAttachment} isVisible={isLinearProgressVisible} />
                 </div>
 
                 <div style={styles.bottom}> {/* // bottom part */}
-                    <Button variant="contained">Default</Button>
+                    <Button variant="contained">Reset</Button>
                     <Button variant="contained" color="primary" onClick={(e) => handleSendEmail()}>
                         Send
                     </Button>
