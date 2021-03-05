@@ -1,7 +1,6 @@
 const { getAuth } = require("../auth/googleAuth");
 const { google } = require('googleapis');
 const SentMail = require('../models/sentEmail');
-const { delToken } = require("./CodeController");
 const mimemessage = require('mimemessage');
 const fs = require('fs');
 
@@ -138,19 +137,18 @@ async function registerSentEmail(mailInfo, auth) {
 }
 
 function delUploadedFile(file) {
-    fs.unlinkSync(file);
+    fs.unlinkSync(file.path);
 }
 
 async function handleSendEmail(req, res) {
-    const { to } = req.body;
-    const { file } = req;
+    console.log(req.body)
+    const { to, file } = req.body;
 
     const auth = getAuth();
 
     const result = await sendMessage(to, file, auth);
 
-    delToken(); //Otherwise the invalid refresh token can be thrown
-    // delUploadedFile(file); //For security reasons & to save storage
+    delUploadedFile(file); //For security reasons & to save storage
 
     res.status(result.ok ? 200 : 500)
     return res.json({ ...result })

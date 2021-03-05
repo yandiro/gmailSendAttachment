@@ -3,7 +3,6 @@ const fs = require('fs');
 const { google } = require('googleapis');
 const { setAuth, getAuth } = require('../auth/googleAuth');
 
-
 const TOKEN_PATH = 'token.json';
 
 function setCode(req, res) {
@@ -36,16 +35,8 @@ function setCode(req, res) {
         });
     }
 
-
-    function saveAuth(oAuth2Client) {
-        setAuth(oAuth2Client);
-    }
-
-
     function getNewToken(oAuth2Client, callback) {
         oAuth2Client.getToken(code, (err, token) => {
-
-            console.log('code', code);
 
             if (err) return console.error('Error retrieving access token', err);
             oAuth2Client.setCredentials(token);
@@ -66,8 +57,8 @@ function getToken(req, res) {
     return res.json({ token: auth.credentials.access_token })
 }
 
-function delToken() {
-    fs.unlinkSync(TOKEN_PATH);
+function saveAuth(oAuth2Client) {
+    setAuth(oAuth2Client);
 }
 
-module.exports = { setCode, delToken, getToken };
+module.exports = { setCode, getToken };
