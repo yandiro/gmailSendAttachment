@@ -45,7 +45,7 @@ function CreateEmail() {
 
     function handleSendEmail() {
         setSendingResponse(null)
-        if (!formValidity?.isValid && formValidity?.isDirty) {
+        if (!formValidity?.isValid) {
             setSendingResponse('Form is invalid')
             return
         }
