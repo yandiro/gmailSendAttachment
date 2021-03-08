@@ -1,3 +1,5 @@
+import '../css/createEmail.css';
+
 import React, { useEffect, useState } from 'react';
 
 import { useLocation } from "react-router-dom";
@@ -139,10 +141,10 @@ function CreateEmail() {
     }
 
     return (
-        <div style={styles.wrapper} >
+        <div className="wrapper">
 
-            <form style={styles.form} id="form">
-                <div style={styles.upper}> {/* // superior part */}
+            <form className="form" id="form">
+                <div className="upper"> {/* // superior part */}
                     <div> {/* left Part */}
                         <TextField type="email" id="email" label="Send email to:" fullWidth required
                             helperText={formValidity.helperText} error={!formValidity.isValid && formValidity.isDirty}
@@ -169,7 +171,7 @@ function CreateEmail() {
                     }
                 </div>
 
-                <div style={styles.bottom}> {/* // bottom part */}
+                <div className="bottom"> {/* // bottom part */}
                     <Button variant="contained" onClick={e => timerToClearForm()}>Reset</Button>
                     <Button variant="contained" color="primary" onClick={(e) => handleSendEmail()}>
                         Send
@@ -180,32 +182,5 @@ function CreateEmail() {
     );
 }
 
-const styles = {
-    bottom: {
-        display: 'flex',
-        justifyContent: 'space-evenly'
-    },
-    upper: {
-        display: 'grid',
-        gridTemplateColumns: '1fr 150px'
-    },
-    form: {
-        width: '50vw',
-        height: '30vh',
-        minHeight: '300px',
-        backgroundColor: 'lightgrey',
-        boxSizing: 'border-box',
-        padding: '50px',
-        display: 'flex',
-        flexFlow: 'column nowrap',
-        justifyContent: 'space-between'
-    },
-    wrapper: {
-        width: '100vw',
-        height: '100vh',
-        display: 'grid',
-        placeContent: 'center'
-    }
-};
 
 export default CreateEmail;
