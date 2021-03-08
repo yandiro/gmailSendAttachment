@@ -1,0 +1,51 @@
+.bottom {
+    display: flex;
+    justify-content: space-evenly;
+}
+
+ 
+.upper {
+    display: grid;
+}
+
+.form {
+    min-height: 300px;
+    background-color: lightgrey;
+    box-sizing: border-box;
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: space-between
+}
+
+.wrapper {
+    width: 100vw;
+    height: 100vh;
+    display: grid;
+    place-content: center
+}
+
+/* Small Screens */
+@media only screen and (max-device-width: 750px) {
+    .form {
+        width: 100vw;
+        height: 30vh;
+        padding: 50px 10px;
+    }
+
+    .upper {
+        grid-template-columns: 1fr 50px;
+    }
+}
+
+/* NOT small screens */
+@media not all and (max-device-width: 750px) {
+    .form {
+        width: 50vw;
+        height: 30vh;
+        padding: 50px;
+    }
+
+    .upper {
+        grid-template-columns: 1fr 150px;
+    }
+}
